@@ -10,6 +10,9 @@ export default function DashboardPage() {
       <div>
         <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
         <p className="text-gray-600 mt-1">Your placement readiness at a glance.</p>
+        <p className="text-sm text-gray-500 mt-2">
+          Use <strong>Analyze</strong> in the sidebar to paste a JD and get results (score, company intel, round mapping, plan). Open <strong>Results</strong> or <strong>History</strong> to view them.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

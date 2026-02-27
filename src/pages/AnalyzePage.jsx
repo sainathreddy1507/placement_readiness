@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { runAnalysis } from '../utils/analysis';
 import { saveToHistory } from '../utils/historyStorage';
+import { getCompanyIntel } from '../utils/companyIntel';
+import { getRoundMapping } from '../utils/roundMapping';
 import { FileText } from 'lucide-react';
 
 export default function AnalyzePage() {
@@ -23,18 +25,25 @@ export default function AnalyzePage() {
     setLoading(true);
     try {
       const result = runAnalysis({ company: company.trim(), role: role.trim(), jdText: jdText.trim() });
+      const companyTrimmed = company.trim();
+      const jdTrimmed = jdText.trim();
+      const companyIntel = companyTrimmed
+        ? getCompanyIntel(companyTrimmed, jdTrimmed, result.extractedSkills)
+        : null;
+      const roundMapping = getRoundMapping(companyTrimmed, jdTrimmed, result.extractedSkills);
       const entry = {
-        company: company.trim(),
+        company: companyTrimmed,
         role: role.trim(),
-        jdText: jdText.trim(),
+        jdText: jdTrimmed,
         extractedSkills: result.extractedSkills,
         plan: result.plan,
         checklist: result.checklist,
         questions: result.questions,
-        // Base score from analysis; interactive adjustments are stored separately
         baseReadinessScore: result.readinessScore,
         readinessScore: result.readinessScore,
         skillConfidenceMap: {},
+        companyIntel,
+        roundMapping,
       };
       const saved = saveToHistory(entry);
       if (saved) {
