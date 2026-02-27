@@ -31,7 +31,10 @@ export default function AnalyzePage() {
         plan: result.plan,
         checklist: result.checklist,
         questions: result.questions,
+        // Base score from analysis; interactive adjustments are stored separately
+        baseReadinessScore: result.readinessScore,
         readinessScore: result.readinessScore,
+        skillConfidenceMap: {},
       };
       const saved = saveToHistory(entry);
       if (saved) {

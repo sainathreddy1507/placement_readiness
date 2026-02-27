@@ -2,7 +2,20 @@ const STORAGE_KEY = 'placement_readiness_history';
 
 /**
  * History entry shape:
- * { id, createdAt, company, role, jdText, extractedSkills, plan, checklist, questions, readinessScore }
+ * {
+ *   id,
+ *   createdAt,
+ *   company,
+ *   role,
+ *   jdText,
+ *   extractedSkills,
+ *   plan,
+ *   checklist,
+ *   questions,
+ *   readinessScore,
+ *   baseReadinessScore?,
+ *   skillConfidenceMap?
+ * }
  */
 export function getHistory() {
   try {
@@ -35,6 +48,22 @@ export function saveToHistory(entry) {
 export function getHistoryEntryById(id) {
   const list = getHistory();
   return list.find((e) => e.id === id) || null;
+}
+
+export function updateHistoryEntry(updatedEntry) {
+  if (!updatedEntry || !updatedEntry.id) return null;
+  const list = getHistory();
+  const index = list.findIndex((e) => e.id === updatedEntry.id);
+  if (index === -1) return null;
+  const merged = { ...list[index], ...updatedEntry };
+  list[index] = merged;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    return merged;
+  } catch (e) {
+    console.error('Failed to update history', e);
+    return null;
+  }
 }
 
 export function deleteHistoryEntry(id) {
