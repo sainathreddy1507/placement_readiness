@@ -1,71 +1,26 @@
-import React, { useState } from 'react';
-import {
-  PageLayout,
-  Card,
-  SecondaryPanel,
-  Button,
-  EmptyState,
-} from './components';
-import './design-system/tokens.css';
-import './design-system/base.css';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import LandingPage from './pages/LandingPage';
+import DashboardLayout from './layouts/DashboardLayout';
+import DashboardPage from './pages/DashboardPage';
+import PracticePage from './pages/PracticePage';
+import AssessmentsPage from './pages/AssessmentsPage';
+import ResourcesPage from './pages/ResourcesPage';
+import ProfilePage from './pages/ProfilePage';
 
-/**
- * Design system demo — full layout structure only. No product features.
- */
 export default function App() {
-  const [proof, setProof] = useState({
-    ui: false,
-    logic: false,
-    test: false,
-    deployed: false,
-  });
-
-  const proofItems = [
-    { id: 'ui', label: 'UI Built', proof: proof.ui },
-    { id: 'logic', label: 'Logic Working', proof: proof.logic },
-    { id: 'test', label: 'Test Passed', proof: proof.test },
-    { id: 'deployed', label: 'Deployed', proof: proof.deployed },
-  ];
-
-  const handleProofChange = (id, checked) => {
-    setProof((p) => ({ ...p, [id]: checked }));
-  };
-
-  const primaryContent = (
-    <Card>
-      <EmptyState
-        title="Primary workspace"
-        description="Main product interaction lives here. Clean cards, predictable components."
-        action={<Button>Next action</Button>}
-      />
-    </Card>
-  );
-
-  const secondaryContent = (
-    <SecondaryPanel
-      stepTitle="Step 1"
-      stepDescription="Short explanation of what this step does."
-      promptText="Copy this prompt into your AI builder."
-      onCopy={async (text) => navigator.clipboard?.writeText(text)}
-      onBuildInLovable={() => {}}
-      onItWorked={() => {}}
-      onError={() => {}}
-      onAddScreenshot={() => {}}
-    />
-  );
-
   return (
-    <PageLayout
-      projectName="KodNest Premium Build System"
-      stepCurrent={1}
-      stepTotal={5}
-      status="In Progress"
-      headerTitle="Design system"
-      headerSubtitle="Layout and components only. No product features yet."
-      primaryContent={primaryContent}
-      secondaryContent={secondaryContent}
-      proofItems={proofItems}
-      onProofChange={handleProofChange}
-    />
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/dashboard" element={<DashboardLayout />}>
+          <Route index element={<DashboardPage />} />
+          <Route path="practice" element={<PracticePage />} />
+          <Route path="assessments" element={<AssessmentsPage />} />
+          <Route path="resources" element={<ResourcesPage />} />
+          <Route path="profile" element={<ProfilePage />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
