@@ -1,0 +1,11 @@
+.card {
+  padding: var(--kn-space-3);
+  border: 1px solid var(--kn-border);
+  border-radius: var(--kn-radius);
+  background: var(--kn-background);
+  transition: border-color var(--kn-transition);
+}
+
+.card:hover {
+  border-color: var(--kn-text-muted);
+}

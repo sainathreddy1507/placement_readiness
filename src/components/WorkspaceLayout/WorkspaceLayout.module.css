@@ -1,0 +1,28 @@
+.layout {
+  display: flex;
+  gap: var(--kn-space-4);
+  padding: 0 var(--kn-space-4) var(--kn-space-4);
+  flex: 1;
+  min-height: 0;
+}
+
+.primary {
+  flex: 0 0 70%;
+  min-width: 0;
+}
+
+.secondary {
+  flex: 0 0 calc(30% - var(--kn-space-4));
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .layout {
+    flex-direction: column;
+  }
+
+  .primary,
+  .secondary {
+    flex: 1 1 auto;
+  }
+}

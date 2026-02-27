@@ -1,0 +1,23 @@
+.wrapper {
+  padding: var(--kn-space-4);
+  text-align: center;
+  border: 1px solid var(--kn-border);
+  border-radius: var(--kn-radius);
+  background: var(--kn-background);
+}
+
+.title {
+  margin: 0 0 var(--kn-space-1) 0;
+  font-size: var(--kn-size-body);
+}
+
+.description {
+  font-size: var(--kn-size-caption);
+  color: var(--kn-text-muted);
+  margin: 0 0 var(--kn-space-2) 0;
+  max-width: none;
+}
+
+.action {
+  margin-top: var(--kn-space-2);
+}

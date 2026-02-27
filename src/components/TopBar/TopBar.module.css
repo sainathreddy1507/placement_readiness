@@ -1,0 +1,26 @@
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--kn-space-2) var(--kn-space-4);
+  border-bottom: 1px solid var(--kn-border);
+  background: var(--kn-background);
+}
+
+.left {
+  font-family: var(--kn-font-body);
+  font-size: var(--kn-size-caption);
+  font-weight: var(--kn-weight-medium);
+  color: var(--kn-text);
+}
+
+.center {
+  font-family: var(--kn-font-body);
+  font-size: var(--kn-size-caption);
+  color: var(--kn-text-muted);
+}
+
+.right {
+  display: flex;
+  align-items: center;
+}

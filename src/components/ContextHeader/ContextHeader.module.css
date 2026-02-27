@@ -1,0 +1,15 @@
+.contextHeader {
+  padding: var(--kn-space-4) var(--kn-space-4) var(--kn-space-3);
+  margin-bottom: var(--kn-space-2);
+}
+
+.title {
+  margin-bottom: var(--kn-space-1);
+}
+
+.subtitle {
+  font-size: var(--kn-size-body);
+  color: var(--kn-text-muted);
+  margin: 0;
+  max-width: var(--kn-text-max-width);
+}

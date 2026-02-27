@@ -1,0 +1,17 @@
+.box {
+  padding: var(--kn-space-2);
+  border: 1px solid var(--kn-border);
+  border-radius: var(--kn-radius);
+  background: var(--kn-background);
+  overflow: auto;
+}
+
+.pre {
+  margin: 0;
+  font-family: var(--kn-font-body);
+  font-size: var(--kn-size-caption);
+  line-height: var(--kn-line-height-body);
+  color: var(--kn-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}

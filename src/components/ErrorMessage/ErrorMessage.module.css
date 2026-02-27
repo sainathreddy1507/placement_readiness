@@ -1,0 +1,27 @@
+.wrapper {
+  padding: var(--kn-space-2);
+  border: 1px solid var(--kn-warning);
+  border-radius: var(--kn-radius);
+  background: var(--kn-background);
+}
+
+.title {
+  display: block;
+  font-size: var(--kn-size-caption);
+  color: var(--kn-text);
+  margin-bottom: var(--kn-space-1);
+}
+
+.description {
+  font-size: var(--kn-size-caption);
+  color: var(--kn-text-muted);
+  margin: 0 0 var(--kn-space-1) 0;
+  max-width: none;
+}
+
+.remedy {
+  font-size: var(--kn-size-caption);
+  color: var(--kn-success);
+  margin: 0;
+  max-width: none;
+}

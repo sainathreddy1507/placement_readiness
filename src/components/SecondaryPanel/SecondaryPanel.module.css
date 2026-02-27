@@ -1,0 +1,32 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kn-space-3);
+  padding: var(--kn-space-3);
+  border: 1px solid var(--kn-border);
+  border-radius: var(--kn-radius);
+  background: var(--kn-background);
+}
+
+.stepTitle {
+  font-size: var(--kn-size-body);
+  margin: 0 0 var(--kn-space-1) 0;
+}
+
+.stepDescription {
+  font-size: var(--kn-size-caption);
+  color: var(--kn-text-muted);
+  margin: 0;
+  max-width: none;
+  line-height: var(--kn-line-height-body);
+}
+
+.prompt {
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kn-space-1);
+}

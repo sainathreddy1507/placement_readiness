@@ -1,0 +1,25 @@
+.badge {
+  display: inline-block;
+  padding: var(--kn-space-1) var(--kn-space-2);
+  font-size: var(--kn-size-caption);
+  font-weight: var(--kn-weight-medium);
+  border-radius: var(--kn-radius);
+  border: 1px solid var(--kn-border);
+  background: var(--kn-background);
+  color: var(--kn-text-muted);
+  transition: border-color var(--kn-transition), color var(--kn-transition);
+}
+
+.neutral {
+  /* default */
+}
+
+.inProgress {
+  border-color: var(--kn-accent);
+  color: var(--kn-accent);
+}
+
+.shipped {
+  border-color: var(--kn-success);
+  color: var(--kn-success);
+}
