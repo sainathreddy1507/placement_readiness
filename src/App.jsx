@@ -6,6 +6,9 @@ import PracticePage from './pages/PracticePage';
 import AssessmentsPage from './pages/AssessmentsPage';
 import ResourcesPage from './pages/ResourcesPage';
 import ProfilePage from './pages/ProfilePage';
+import AnalyzePage from './pages/AnalyzePage';
+import ResultsPage from './pages/ResultsPage';
+import HistoryPage from './pages/HistoryPage';
 
 export default function App() {
   return (
@@ -18,6 +21,9 @@ export default function App() {
           <Route path="assessments" element={<AssessmentsPage />} />
           <Route path="resources" element={<ResourcesPage />} />
           <Route path="profile" element={<ProfilePage />} />
+          <Route path="analyze" element={<AnalyzePage />} />
+          <Route path="results" element={<ResultsPage />} />
+          <Route path="history" element={<HistoryPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
