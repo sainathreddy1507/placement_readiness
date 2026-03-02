@@ -9,6 +9,8 @@ import ProfilePage from './pages/ProfilePage';
 import AnalyzePage from './pages/AnalyzePage';
 import ResultsPage from './pages/ResultsPage';
 import HistoryPage from './pages/HistoryPage';
+import TestChecklistPage from './pages/TestChecklistPage';
+import ShipPage from './pages/ShipPage';
 
 export default function App() {
   return (
@@ -25,6 +27,8 @@ export default function App() {
           <Route path="results" element={<ResultsPage />} />
           <Route path="history" element={<HistoryPage />} />
         </Route>
+        <Route path="/prp/07-test" element={<TestChecklistPage />} />
+        <Route path="/prp/08-ship" element={<ShipPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
