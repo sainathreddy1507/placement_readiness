@@ -1,11 +1,11 @@
 import { useNavigate } from 'react-router-dom';
-import { getHistory } from '../utils/historyStorage';
+import { getHistoryWithSkipped } from '../utils/historyStorage';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { History } from 'lucide-react';
 
 export default function HistoryPage() {
   const navigate = useNavigate();
-  const entries = getHistory();
+  const { entries, skippedCount } = getHistoryWithSkipped();
 
   const formatDate = (iso) => {
     try {
@@ -35,6 +35,11 @@ export default function HistoryPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
+          {skippedCount > 0 && (
+            <p className="text-sm text-amber-700 mb-4">
+              One saved entry couldn&apos;t be loaded. Create a new analysis.
+            </p>
+          )}
           {entries.length === 0 ? (
             <p className="text-gray-600">No analyses yet. Run one from the Analyze page.</p>
           ) : (
@@ -52,7 +57,7 @@ export default function HistoryPage() {
                       </p>
                       <p className="text-sm text-gray-500">{formatDate(entry.createdAt)}</p>
                     </div>
-                    <span className="text-lg font-semibold text-primary shrink-0">{entry.readinessScore ?? '—'}</span>
+                    <span className="text-lg font-semibold text-primary shrink-0">{entry.finalScore ?? entry.readinessScore ?? '—'}</span>
                   </div>
                 </li>
               ))}

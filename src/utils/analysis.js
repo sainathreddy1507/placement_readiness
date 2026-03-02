@@ -1,4 +1,5 @@
 import { extractSkillsFromJD, getDetectedCategoryKeys, getAllDetectedSkills } from './skillExtraction';
+import { DEFAULT_OTHER_SKILLS } from './analysisSchema';
 
 const ROUND_LABELS = [
   'Round 1: Aptitude / Basics',
@@ -178,14 +179,54 @@ function computeReadinessScore(extracted, company, role, jdText) {
   return Math.min(100, Math.max(0, score));
 }
 
+/** When no skills detected: checklist focused on Communication, Problem solving, Basic coding, Projects. */
+function buildChecklistForOther() {
+  return [
+    { round: 'Round 1: Aptitude / Basics', items: ['Quantitative and logical reasoning', 'Verbal ability and comprehension', 'Company and role research', 'Time management practice'] },
+    { round: 'Round 2: Problem-solving & Basic coding', items: ['Basic coding in your preferred language', 'Simple data structures (arrays, strings)', 'Problem-solving approach and clarity', 'Practice explaining your approach'] },
+    { round: 'Round 3: Projects & Communication', items: ['Prepare 1–2 projects with clear impact', 'Practice explaining projects in 2–3 minutes', 'Communication and clarity of thought', 'Behavioural STAR examples'] },
+    { round: 'Round 4: HR & Fit', items: ['Tell me about yourself', 'Why this company / role', 'Strengths and weaknesses', 'Questions to ask the interviewer'] },
+  ];
+}
+
+/** 7-day plan when only "other" skills (e.g. general fresher). */
+function buildPlanForOther() {
+  return [
+    { day: 1, title: 'Day 1–2: Basics & Communication', items: ['Brush up basics of one language', 'Practice explaining a project in 2 minutes', 'One simple coding problem'] },
+    { day: 3, title: 'Day 3–4: Problem-solving practice', items: ['Arrays and strings: 2–3 problems', 'Practice explaining approach out loud', 'Basic logic and reasoning'] },
+    { day: 5, title: 'Day 5: Projects & Resume', items: ['Document project impact clearly', 'Resume bullet proofing', 'Prepare STAR stories'] },
+    { day: 6, title: 'Day 6: Mock & Questions', items: ['Mock: explain a project', 'Mock: one coding problem', 'Prepare 3–5 questions for interviewer'] },
+    { day: 7, title: 'Day 7: Revision', items: ['Revision: weak areas', 'Final run-through of intro and projects'] },
+  ];
+}
+
+/** 10 questions when no specific skills detected (other focus). */
+function buildQuestionsForOther() {
+  return [
+    'Tell me about yourself and your background.',
+    'Describe a project you worked on and your role.',
+    'How do you approach a problem you have not seen before?',
+    'Explain a technical concept to a non-technical person.',
+    'Describe a time you worked in a team under pressure.',
+    'What are your strengths and weaknesses?',
+    'Why do you want to join this company / role?',
+    'Where do you see yourself in 2–3 years?',
+    'Do you have any questions for us?',
+    'What is one thing you would like to improve?',
+  ];
+}
+
 /**
  * Run full analysis from form inputs. No external APIs.
+ * When no skills detected, uses "other" (Communication, Problem solving, Basic coding, Projects).
  */
 export function runAnalysis({ company = '', role = '', jdText = '' }) {
   const extracted = extractSkillsFromJD(jdText);
-  const checklist = buildChecklist(extracted);
-  const plan = buildSevenDayPlan(extracted);
-  const questions = buildQuestions(extracted);
+  const isOtherOnly = extracted.generalFresher || getDetectedCategoryKeys(extracted).length === 0;
+
+  const checklist = isOtherOnly ? buildChecklistForOther() : buildChecklist(extracted);
+  const plan = isOtherOnly ? buildPlanForOther() : buildSevenDayPlan(extracted);
+  const questions = isOtherOnly ? buildQuestionsForOther() : buildQuestions(extracted);
   const readinessScore = computeReadinessScore(extracted, company, role, jdText);
 
   return {

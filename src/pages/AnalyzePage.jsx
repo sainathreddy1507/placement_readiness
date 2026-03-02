@@ -14,6 +14,7 @@ export default function AnalyzePage() {
   const [jdText, setJdText] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const jdShort = jdText.trim().length > 0 && jdText.trim().length < 200;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -39,8 +40,8 @@ export default function AnalyzePage() {
         plan: result.plan,
         checklist: result.checklist,
         questions: result.questions,
-        baseReadinessScore: result.readinessScore,
-        readinessScore: result.readinessScore,
+        baseScore: result.readinessScore,
+        finalScore: result.readinessScore,
         skillConfidenceMap: {},
         companyIntel,
         roundMapping,
@@ -101,8 +102,14 @@ export default function AnalyzePage() {
                 onChange={(e) => setJdText(e.target.value)}
                 placeholder="Paste the full job description here..."
                 rows={12}
+                required
                 className="w-full rounded-lg border border-gray-200 px-4 py-2 text-gray-900 placeholder-gray-400 focus:border-primary focus:ring-1 focus:ring-primary resize-y min-h-[200px]"
               />
+              {jdShort && (
+                <p className="mt-1.5 text-sm text-amber-700">
+                  This JD is too short to analyze deeply. Paste full JD for better output.
+                </p>
+              )}
             </div>
             {error && (
               <p className="text-sm text-red-600">{error}</p>

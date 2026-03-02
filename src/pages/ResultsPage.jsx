@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { getHistoryEntryById, getHistory, updateHistoryEntry } from '../utils/historyStorage';
 import { getCompanyIntel } from '../utils/companyIntel';
 import { getRoundMapping } from '../utils/roundMapping';
+import { toDisplayCategories, toLegacyExtracted } from '../utils/analysisSchema';
 import { ArrowLeft, Calendar, ListChecks, HelpCircle, Target, Download, ClipboardList, Building2, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -25,23 +26,21 @@ export default function ResultsPage() {
     if (history.length > 0) setEntry(history[0]);
   }, [idFromState, entry]);
 
-  // Initialize / sync skill confidence map whenever entry changes
+  // Initialize / sync skill confidence map whenever entry changes (works with normalized extractedSkills)
   useEffect(() => {
     if (!entry || !entry.extractedSkills) return;
-    const categories = entry.extractedSkills.categories || {};
+    const extracted = entry.extractedSkills;
     const existing = entry.skillConfidenceMap || {};
     const next = { ...existing };
-    Object.values(categories).forEach(({ skills = [] }) => {
-      skills.forEach((s) => {
-        if (!next[s]) {
-          next[s] = 'practice'; // default
-        }
-      });
+    const keys = ['coreCS', 'languages', 'web', 'data', 'cloud', 'testing', 'other'];
+    keys.forEach((key) => {
+      const skills = extracted[key];
+      if (Array.isArray(skills)) skills.forEach((s) => { if (!next[s]) next[s] = 'practice'; });
     });
     setSkillConfidence(next);
-    // Also persist base score if missing
-    if (entry && typeof entry.baseReadinessScore !== 'number' && typeof entry.readinessScore === 'number') {
-      const updated = { ...entry, baseReadinessScore: entry.readinessScore, skillConfidenceMap: next };
+    const baseScoreVal = typeof entry.baseScore === 'number' ? entry.baseScore : (typeof entry.baseReadinessScore === 'number' ? entry.baseReadinessScore : null);
+    if (entry && baseScoreVal === null && typeof entry.finalScore === 'number') {
+      const updated = { ...entry, baseScore: entry.finalScore, skillConfidenceMap: next };
       setEntry(updated);
       updateHistoryEntry(updated);
     } else if (entry) {
@@ -79,19 +78,21 @@ export default function ResultsPage() {
   }
 
   const { company, role, extractedSkills, checklist, plan, questions } = data;
-  const categories = extractedSkills?.categories || {};
-  const generalFresher = extractedSkills?.generalFresher;
+  const categories = toDisplayCategories(extractedSkills) || {};
+  const generalFresher = Object.keys(categories).length === 0 || (Object.keys(categories).length === 1 && categories.other);
+
+  const legacyExtracted = useMemo(() => toLegacyExtracted(extractedSkills), [extractedSkills]);
 
   const companyIntel = useMemo(() => {
     if (!company || !company.trim()) return null;
-    return data.companyIntel || getCompanyIntel(company, data.jdText, extractedSkills);
-  }, [company, data.companyIntel, data.jdText, extractedSkills]);
+    return data.companyIntel || getCompanyIntel(company, data.jdText, legacyExtracted);
+  }, [company, data.companyIntel, data.jdText, legacyExtracted]);
 
   const roundMapping = useMemo(() => {
     return data.roundMapping && data.roundMapping.length > 0
       ? data.roundMapping
-      : getRoundMapping(company, data.jdText, extractedSkills);
-  }, [company, data.jdText, data.roundMapping, extractedSkills]);
+      : getRoundMapping(company, data.jdText, legacyExtracted);
+  }, [company, data.jdText, data.roundMapping, legacyExtracted]);
 
   // Persist intel for older entries that don't have it
   useEffect(() => {
@@ -100,17 +101,17 @@ export default function ResultsPage() {
     if (hasIntel) return;
     const updated = {
       ...data,
-      companyIntel: companyIntel || getCompanyIntel(company, data.jdText, extractedSkills),
+      companyIntel: companyIntel || getCompanyIntel(company, data.jdText, legacyExtracted),
       roundMapping,
     };
     setEntry(updated);
     updateHistoryEntry(updated);
-  }, [data?.id, company, data?.companyIntel, data?.roundMapping, companyIntel, roundMapping, extractedSkills, data]);
+  }, [data?.id, company, data?.companyIntel, data?.roundMapping, companyIntel, roundMapping, legacyExtracted, data]);
 
-  const baseScore = typeof data.baseReadinessScore === 'number'
-    ? data.baseReadinessScore
-    : typeof data.readinessScore === 'number'
-      ? data.readinessScore
+  const baseScore = typeof data.baseScore === 'number'
+    ? data.baseScore
+    : typeof data.baseReadinessScore === 'number'
+      ? data.baseReadinessScore
       : 35;
 
   const allSkills = useMemo(() => {
@@ -150,11 +151,10 @@ export default function ResultsPage() {
         if (state === 'know') know += 1;
         else practice += 1;
       });
-      const base = typeof updatedEntry.baseReadinessScore === 'number'
-        ? updatedEntry.baseReadinessScore
-        : baseScore;
+      const base = typeof updatedEntry.baseScore === 'number' ? updatedEntry.baseScore : baseScore;
       const newScore = Math.max(0, Math.min(100, base + know * 2 - practice * 2));
-      updatedEntry.readinessScore = newScore;
+      updatedEntry.finalScore = newScore;
+      updatedEntry.updatedAt = new Date().toISOString();
       setEntry(updatedEntry);
       updateHistoryEntry(updatedEntry);
       return next;
@@ -313,9 +313,9 @@ export default function ResultsPage() {
             <span className="text-4xl font-bold text-primary">{adjustedScore}</span>
             <span className="text-gray-500">/ 100</span>
           </div>
-          {typeof data.baseReadinessScore === 'number' && (
+          {(typeof data.baseScore === 'number' || typeof data.baseReadinessScore === 'number') && (
             <p className="mt-1 text-xs text-gray-500">
-              Base score: {data.baseReadinessScore}. Adjusted by your self-assessment.
+              Base score: {baseScore}. Adjusted by your self-assessment.
             </p>
           )}
         </CardContent>

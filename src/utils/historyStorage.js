@@ -1,23 +1,7 @@
 const STORAGE_KEY = 'placement_readiness_history';
+import { validateEntry, toCanonicalEntry, normalizeEntry } from './analysisSchema';
 
-/**
- * History entry shape:
- * {
- *   id,
- *   createdAt,
- *   company,
- *   role,
- *   jdText,
- *   extractedSkills,
- *   plan,
- *   checklist,
- *   questions,
- *   readinessScore,
- *   baseReadinessScore?,
- *   skillConfidenceMap?
- * }
- */
-export function getHistory() {
+function getRawList() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
@@ -28,17 +12,61 @@ export function getHistory() {
   }
 }
 
+/**
+ * Returns { entries: valid entries only, skippedCount: number of corrupted skipped }.
+ * If any entry was skipped, repairs storage by writing back only valid entries.
+ */
+export function getHistoryWithSkipped() {
+  const raw = getRawList();
+  const entries = [];
+  let skippedCount = 0;
+  for (const entry of raw) {
+    if (validateEntry(entry)) {
+      entries.push(entry);
+    } else {
+      skippedCount += 1;
+    }
+  }
+  if (skippedCount > 0) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    } catch (e) {
+      console.error('Failed to repair history', e);
+    }
+  }
+  return { entries, skippedCount };
+}
+
+/** Returns only valid history entries (array). */
+export function getHistory() {
+  const { entries } = getHistoryWithSkipped();
+  return entries;
+}
+
 export function saveToHistory(entry) {
-  const list = getHistory();
-  const newEntry = {
+  const { entries } = getHistoryWithSkipped();
+  const canonical = toCanonicalEntry({
     ...entry,
-    id: entry.id || `id_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
-    createdAt: entry.createdAt || new Date().toISOString(),
-  };
-  list.unshift(newEntry);
+    id: entry.id || undefined,
+    createdAt: entry.createdAt || undefined,
+    company: entry.company ?? '',
+    role: entry.role ?? '',
+    jdText: entry.jdText ?? '',
+    extractedSkills: entry.extractedSkills,
+    roundMapping: entry.roundMapping,
+    checklist: entry.checklist,
+    plan: entry.plan,
+    plan7Days: entry.plan7Days,
+    questions: entry.questions,
+    baseScore: entry.baseScore ?? entry.baseReadinessScore,
+    finalScore: entry.finalScore ?? entry.readinessScore,
+    skillConfidenceMap: entry.skillConfidenceMap ?? {},
+    companyIntel: entry.companyIntel,
+  });
+  const list = [canonical, ...entries];
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-    return newEntry;
+    return canonical;
   } catch (e) {
     console.error('Failed to save history', e);
     return null;
@@ -46,20 +74,24 @@ export function saveToHistory(entry) {
 }
 
 export function getHistoryEntryById(id) {
-  const list = getHistory();
-  return list.find((e) => e.id === id) || null;
+  const entries = getHistory();
+  const entry = entries.find((e) => e.id === id) || null;
+  return entry ? normalizeEntry(entry) : null;
 }
 
 export function updateHistoryEntry(updatedEntry) {
   if (!updatedEntry || !updatedEntry.id) return null;
-  const list = getHistory();
-  const index = list.findIndex((e) => e.id === updatedEntry.id);
+  const entries = getHistory();
+  const index = entries.findIndex((e) => e.id === updatedEntry.id);
   if (index === -1) return null;
-  const merged = { ...list[index], ...updatedEntry };
-  list[index] = merged;
+  const existing = entries[index];
+  const merged = { ...existing, ...updatedEntry };
+  const now = new Date().toISOString();
+  merged.updatedAt = now;
+  entries[index] = merged;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-    return merged;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    return normalizeEntry(merged);
   } catch (e) {
     console.error('Failed to update history', e);
     return null;
@@ -67,9 +99,9 @@ export function updateHistoryEntry(updatedEntry) {
 }
 
 export function deleteHistoryEntry(id) {
-  const list = getHistory().filter((e) => e.id !== id);
+  const entries = getHistory().filter((e) => e.id !== id);
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
     return true;
   } catch {
     return false;
