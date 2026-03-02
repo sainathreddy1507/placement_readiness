@@ -76,9 +76,19 @@ export function saveToHistory(entry) {
 export function getHistoryEntryById(id) {
   const entries = getHistory();
   const entry = entries.find((e) => e.id === id) || null;
-  return entry ? normalizeEntry(entry) : null;
+  if (!entry) return null;
+  try {
+    const normalized = normalizeEntry(entry);
+    return normalized;
+  } catch {
+    return null;
+  }
 }
 
+/**
+ * Update an existing history entry. Preserves baseScore and createdAt (score stability:
+ * baseScore is set only at analyze time; only finalScore and skillConfidenceMap change on toggle).
+ */
 export function updateHistoryEntry(updatedEntry) {
   if (!updatedEntry || !updatedEntry.id) return null;
   const entries = getHistory();
@@ -87,6 +97,7 @@ export function updateHistoryEntry(updatedEntry) {
   const existing = entries[index];
   const merged = { ...existing, ...updatedEntry };
   const now = new Date().toISOString();
+  merged.baseScore = existing.baseScore;
   merged.updatedAt = now;
   entries[index] = merged;
   try {

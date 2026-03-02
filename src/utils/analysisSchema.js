@@ -1,6 +1,23 @@
 /**
  * Canonical analysis entry schema and normalizers.
  * All saved entries use this shape; legacy entries are normalized on read.
+ *
+ * Standardized entry shape:
+ * {
+ *   id, createdAt, updatedAt,
+ *   company: string | "",
+ *   role: string | "",
+ *   jdText: string,
+ *   extractedSkills: { coreCS, languages, web, data, cloud, testing, other: string[] },
+ *   roundMapping: [{ roundTitle, focusAreas[], whyItMatters }],
+ *   checklist: [{ roundTitle, items[] }],
+ *   plan7Days: [{ day, focus, tasks[] }],
+ *   questions: string[],
+ *   baseScore: number,
+ *   skillConfidenceMap: { [skill]: "know" | "practice" },
+ *   finalScore: number,
+ *   companyIntel?: object | null
+ * }
  */
 
 const EXTRACTED_SKILLS_KEYS = ['coreCS', 'languages', 'web', 'data', 'cloud', 'testing', 'other'];
@@ -13,8 +30,8 @@ export function getEmptyExtractedSkills() {
 
 export function normalizeExtractedSkills(extracted) {
   const out = getEmptyExtractedSkills();
-  if (!extracted) return out;
-  const categories = extracted.categories || {};
+  if (!extracted || typeof extracted !== 'object') return out;
+  const categories = extracted.categories && typeof extracted.categories === 'object' ? extracted.categories : {};
   const map = {
     coreCS: 'coreCS',
     languages: 'languages',
@@ -59,10 +76,23 @@ export function normalizePlan7Days(plan) {
   }));
 }
 
+/**
+ * Validate history entry so corrupted ones are skipped. Ensures required fields exist
+ * and extractedSkills is safe to normalize (object or undefined).
+ */
 export function validateEntry(entry) {
   if (!entry || typeof entry !== 'object') return false;
-  if (!entry.id || typeof entry.jdText !== 'string') return false;
+  if (!entry.id || typeof entry.id !== 'string') return false;
+  if (typeof entry.jdText !== 'string') return false;
   if (typeof entry.createdAt !== 'string') return false;
+  if (entry.extractedSkills !== undefined) {
+    if (typeof entry.extractedSkills !== 'object' || entry.extractedSkills === null || Array.isArray(entry.extractedSkills)) return false;
+  }
+  try {
+    normalizeExtractedSkills(entry.extractedSkills);
+  } catch {
+    return false;
+  }
   return true;
 }
 
@@ -101,34 +131,43 @@ export function toCanonicalEntry(raw) {
 
 /**
  * Normalize legacy or canonical entry for UI (Results/History). Returns canonical shape.
+ * Defensive: never throws; invalid input yields a safe default shape.
  */
 export function normalizeEntry(entry) {
   if (!entry || !entry.id) return null;
-  const extracted = normalizeExtractedSkills(entry.extractedSkills);
-  return {
-    ...entry,
-    company: typeof entry.company === 'string' ? entry.company : '',
-    role: typeof entry.role === 'string' ? entry.role : '',
-    jdText: typeof entry.jdText === 'string' ? entry.jdText : '',
-    extractedSkills: extracted,
-    roundMapping: normalizeRoundMapping(entry.roundMapping).map((r, i) => ({
-      ...r,
-      roundNumber: i + 1,
-      title: r.roundTitle,
-      description: (r.focusAreas && r.focusAreas[0]) || '',
-    })),
-    checklist: normalizeChecklist(entry.checklist).map((c) => ({ ...c, round: c.roundTitle, items: c.items })),
-    plan7Days: entry.plan7Days ?? normalizePlan7Days(entry.plan),
-    plan: Array.isArray(entry.plan) && entry.plan.length > 0
+  try {
+    const extracted = normalizeExtractedSkills(entry.extractedSkills);
+    const plan7Days = entry.plan7Days ?? normalizePlan7Days(entry.plan);
+    const plan = Array.isArray(entry.plan) && entry.plan.length > 0
       ? entry.plan
-      : (entry.plan7Days ?? normalizePlan7Days(entry.plan)).map((p) => ({ day: p.day, title: p.focus, items: p.tasks || [] })),
-    questions: Array.isArray(entry.questions) ? entry.questions : [],
-    baseScore: typeof entry.baseScore === 'number' ? entry.baseScore : (typeof entry.baseReadinessScore === 'number' ? entry.baseReadinessScore : 0),
-    finalScore: typeof entry.finalScore === 'number' ? entry.finalScore : (typeof entry.readinessScore === 'number' ? entry.readinessScore : entry.baseScore ?? 0),
-    readinessScore: typeof entry.finalScore === 'number' ? entry.finalScore : (typeof entry.readinessScore === 'number' ? entry.readinessScore : entry.baseScore ?? 0),
-    skillConfidenceMap: entry.skillConfidenceMap && typeof entry.skillConfidenceMap === 'object' ? entry.skillConfidenceMap : {},
-    updatedAt: entry.updatedAt || entry.createdAt,
-  };
+      : plan7Days.map((p) => ({ day: p.day, title: p.focus, items: p.tasks || [] }));
+    const baseScore = typeof entry.baseScore === 'number' ? entry.baseScore : (typeof entry.baseReadinessScore === 'number' ? entry.baseReadinessScore : 0);
+    const finalScore = typeof entry.finalScore === 'number' ? entry.finalScore : (typeof entry.readinessScore === 'number' ? entry.readinessScore : baseScore);
+    return {
+      ...entry,
+      company: typeof entry.company === 'string' ? entry.company : '',
+      role: typeof entry.role === 'string' ? entry.role : '',
+      jdText: typeof entry.jdText === 'string' ? entry.jdText : '',
+      extractedSkills: extracted,
+      roundMapping: normalizeRoundMapping(entry.roundMapping).map((r, i) => ({
+        ...r,
+        roundNumber: i + 1,
+        title: r.roundTitle,
+        description: (r.focusAreas && r.focusAreas[0]) || '',
+      })),
+      checklist: normalizeChecklist(entry.checklist).map((c) => ({ ...c, round: c.roundTitle, items: c.items || [] })),
+      plan7Days,
+      plan,
+      questions: Array.isArray(entry.questions) ? entry.questions : [],
+      baseScore,
+      finalScore,
+      readinessScore: finalScore,
+      skillConfidenceMap: entry.skillConfidenceMap && typeof entry.skillConfidenceMap === 'object' ? entry.skillConfidenceMap : {},
+      updatedAt: entry.updatedAt || entry.createdAt || new Date().toISOString(),
+    };
+  } catch {
+    return null;
+  }
 }
 
 /** For UI: turn canonical extractedSkills into { key: { label, skills } }. */
